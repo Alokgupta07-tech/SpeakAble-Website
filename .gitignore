@@ -36,6 +36,9 @@ dist-ssr
 # Vercel
 .vercel
 
+# Bolt
+.bolt
+
 # OS
 Thumbs.db
 desktop.ini
