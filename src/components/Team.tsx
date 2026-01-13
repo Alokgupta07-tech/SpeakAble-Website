@@ -5,11 +5,11 @@ import { User } from 'lucide-react';
 
 export default function Team() {
   const teamMembers = [
-    { name: 'Alok Kumar', role: '1st year CSE CORE', focus: 'Backend Development' },
-    { name: 'Adrija Datta', role: '1st year CSE CORE', focus: 'Frontend Development' },
-    { name: 'Yogya Gupta', role: '1st year CSE CORE', focus: 'UI/UX Design' },
-    { name: 'Ayush Rai', role: '1st year CSE CORE', focus: 'Model Training' },
-    { name: 'Aryan Kumar Singh', role: '1st year CSE AI/ML', focus: 'AI/ML Integration' }
+    { name: 'Alok Kumar', role: '1st year CSE CORE', focus:''},
+    { name: 'Adrija Datta', role: '1st year CSE CORE', focus:''},
+    { name: 'Yogya Gupta', role: '1st year CSE CORE', focus:''},
+    { name: 'Ayush Rai', role: '1st year CSE CORE', focus: ''},
+    { name: 'Aryan Kumar Singh', role: '1st year CSE AI/ML', focus:''},
   ];
 
   return (

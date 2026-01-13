@@ -39,22 +39,8 @@ export default function Hero({ onGetStarted }: HeroProps) {
         >
           Try Live Demo
         </button>
-
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 text-white">
-          <div className="backdrop-blur-sm bg-white/10 rounded-2xl p-6">
-            <div className="text-4xl font-bold mb-2">70M+</div>
-            <div className="text-lg">People Worldwide</div>
-          </div>
-          <div className="backdrop-blur-sm bg-white/10 rounded-2xl p-6">
-            <div className="text-4xl font-bold mb-2">&lt;500ms</div>
-            <div className="text-lg">Response Time</div>
-          </div>
-          <div className="backdrop-blur-sm bg-white/10 rounded-2xl p-6">
-            <div className="text-4xl font-bold mb-2">100%</div>
-            <div className="text-lg">Privacy Protected</div>
-          </div>
-        </div>
       </div>
+
     </section>
   );
 }

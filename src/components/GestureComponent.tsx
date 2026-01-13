@@ -3,14 +3,13 @@ import ReactWebcam from 'react-webcam';
 import { HandLandmarker, FilesetResolver, Landmark } from '@mediapipe/tasks-vision';
 import io from 'socket.io-client';
 
-// NOTE: Replace with your backend's LAN IP address
+// --- Constants ---
 const BACKEND_URL = 'http://10.1.72.194:5000';
-
 const WEBCAM_WIDTH = 640;
 const WEBCAM_HEIGHT = 480;
-const SEND_INTERVAL = 50; // ms (Throttling interval)
+const SEND_INTERVAL = 50; // Send data every 50ms
 
-// WebSocket Options
+// --- WebSocket Setup ---
 const socket = io(BACKEND_URL, {
   transports: ['websocket'],
   reconnection: true,
@@ -18,16 +17,16 @@ const socket = io(BACKEND_URL, {
   reconnectionDelay: 1000,
 });
 
-// Speech Synthesis setup
+// --- Speech Synthesis Setup ---
 const speech = new SpeechSynthesisUtterance();
 speech.lang = 'en-US';
 
-function Demo() {
+function GestureComponent() {
   const webcamRef = useRef<ReactWebcam>(null);
   const [predictedText, setPredictedText] = useState('...');
   const [isConnected, setIsConnected] = useState(socket.connected);
 
-  // --- Refs for state inside the loop ---
+  // --- Refs for internal logic (non-UI state) ---
   const handLandmarkerRef = useRef<HandLandmarker | undefined>(undefined);
   const lastVideoTimeRef = useRef(-1);
   const lastSentTimeRef = useRef(0);
@@ -36,11 +35,11 @@ function Demo() {
   // --- Setup MediaPipe HandLandmarker ---
   const setupHandLandmarker = async () => {
     try {
+      console.log('--- 1. Setting up HandLandmarker...');
       const vision = await FilesetResolver.forVisionTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
       );
 
-      // Use the ref
       handLandmarkerRef.current = await HandLandmarker.createFromOptions(vision, {
         baseOptions: {
           modelAssetPath:
@@ -48,19 +47,20 @@ function Demo() {
         },
         runningMode: 'VIDEO',
         numHands: 1,
-        minHandDetectionConfidence: 0.5, // Start with default 0.5
+        minHandDetectionConfidence: 0.5, // Confidence from test.py
       });
-      console.log('✅ HandLandmarker setup complete.');
+
+      console.log('--- ✅ 2. HandLandmarker setup complete.');
       requestAnimationFrame(predictWebcam);
     } catch (error) {
-      console.error('❌ Error setting up HandLandmarker:', error);
+      console.error('--- ❌❌❌ CRITICAL ERROR: Error setting up HandLandmarker: ---', error);
       setPredictedText('Model loading failed (Check console)');
     }
   };
 
   // --- Prediction Loop ---
   const predictWebcam = () => {
-    // Check refs
+    // Check if component is still mounted and refs are set
     if (!webcamRef.current || !webcamRef.current.video || !handLandmarkerRef.current) {
       requestAnimationFrame(predictWebcam);
       return;
@@ -68,29 +68,29 @@ function Demo() {
 
     const video = webcamRef.current.video;
 
-    // --- CRITICAL FIX: Added videoWidth/videoHeight check ---
-    if (
-      !video ||
-      video.readyState < 2 ||
-      video.videoWidth === 0 || // This check prevents "zero size" error
-      video.videoHeight === 0 || // This check prevents "zero size" error
-      video.currentTime === lastVideoTimeRef.current // Check for new frame
-    ) {
+    // Skip if video isn't ready or frame hasn't changed
+    if (video.readyState < 2 || video.currentTime === lastVideoTimeRef.current) {
       requestAnimationFrame(predictWebcam);
       return;
     }
     lastVideoTimeRef.current = video.currentTime;
 
     try {
-      // Use ref
-      // --- THIS IS THE FIX ---
+      // --- 3. RUNNING DETECTION ---
       const results = handLandmarkerRef.current.detectForVideo(video, Date.now());
+
+      // --- 4. LOGGING RESULTS (This is the most important log) ---
+      // This will run every frame. Check if 'landmarks' is empty [].
+      console.log('Detection results:', results.landmarks);
 
       if (results.landmarks && results.landmarks.length > 0) {
         
-        // --- PERFORMANCE FIX: Added Throttling ---
+        // --- 5. HAND DETECTED! ---
+        console.log('--- ✅ HAND DETECTED! Sending to backend. ---');
+
+        // --- Throttling Logic ---
         if (Date.now() - lastSentTimeRef.current > SEND_INTERVAL) {
-          lastSentTimeRef.current = Date.now(); // Update last sent time
+          lastSentTimeRef.current = Date.now(); 
 
           const hand = results.landmarks[0];
           const pixelLandmarks = hand.map((lm: Landmark) => [
@@ -99,12 +99,14 @@ function Demo() {
           ]);
 
           if (socket.connected) {
-            socket.emit('gesture_data', { landmarks: pixelLandmarks });
-          }
-        }
+                    console.log('Emitting gesture_data');
+                    socket.emit('gesture_data', { landmarks: pixelLandmarks });
+                  } else {
+                    console.log('Socket not connected');
+                  }        }
       }
     } catch (err) {
-      console.error('⚠️ Hand detection error:', err);
+      console.error('--- ❌ ERROR during detection loop: ---', err);
     }
 
     requestAnimationFrame(predictWebcam);
@@ -115,22 +117,25 @@ function Demo() {
     setupHandLandmarker();
 
     socket.on('connect', () => {
-      console.log('🟢 Connected to backend');
+      console.log('--- 🟢 Connected to backend ---');
       setIsConnected(true);
     });
 
     socket.on('disconnect', () => {
-      console.log('🔴 Disconnected from backend');
+      console.log('--- 🔴 Disconnected from backend ---');
       setIsConnected(false);
     });
 
     socket.on('prediction_result', (data: { text: string; confidence: number }) => {
-      setPredictedText(data.text);
       
-      // Use ref to check for new word
+      // --- 6. PREDICTION RECEIVED! ---
+      console.log('--- ✅✅✅ Prediction received from backend: ---', data.text);
+
+      setPredictedText(data.text);
+
       if (data.text !== lastSpokenRef.current) {
         lastSpokenRef.current = data.text;
-        window.speechSynthesis.cancel();
+        window.speechSynthesis.cancel(); 
         speech.text = data.text;
         window.speechSynthesis.speak(speech);
       }
@@ -141,7 +146,7 @@ function Demo() {
       socket.off('disconnect');
       socket.off('prediction_result');
     };
-  }, []); // <-- Empty dependency array is correct
+  }, []); 
 
   // --- UI ---
   return (
@@ -166,4 +171,4 @@ function Demo() {
   );
 }
 
-export default Demo;
+export default GestureComponent;

@@ -1,152 +1,168 @@
-// Camera Feed Component
-// Simulates webcam feed with gesture detection overlay
-// In production, this would use MediaPipe Hands for real gesture detection
-
 import { useEffect, useRef, useState } from 'react';
-import { Camera, CameraOff } from 'lucide-react';
+import ReactWebcam from 'react-webcam';
+import { HandLandmarker, FilesetResolver, Landmark } from '@mediapipe/tasks-vision';
+import io from 'socket.io-client';
 
-interface CameraFeedProps {
-  isActive: boolean;
-  onGestureDetected: (gesture: string) => void;
-}
+// --- 1. Connect to backend ---
+const socket = io('http://10.1.72.194:5000'); // Replace with your backend IP
 
-export default function CameraFeed({ isActive, onGestureDetected }: CameraFeedProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [isSimulating, setIsSimulating] = useState(false);
+// --- 2. Speech synthesis ---
+const speech = new SpeechSynthesisUtterance();
+speech.lang = 'en-US';
 
-  // Simulated gestures for demo purposes
-  const gestureLibrary = [
-    'Hello', 'Thank you', 'Yes', 'No', 'Help', 'Please',
-    'Good', 'Bad', 'Water', 'Food', 'Happy', 'Sorry'
-  ];
+// --- 3. Webcam size ---
+const WEBCAM_WIDTH = 640;
+const WEBCAM_HEIGHT = 480;
+
+// --- 4. Send interval ---
+const SEND_INTERVAL = 50; // ms
+
+function GestureComponent() {
+  const webcamRef = useRef<ReactWebcam>(null);
+  const [predictedText, setPredictedText] = useState('...');
+  const [isConnected, setIsConnected] = useState(socket.connected);
+
+  // Refs for managing state inside requestAnimationFrame and socket listeners
+  const lastSpokenRef = useRef('');
+  const handLandmarkerRef = useRef<HandLandmarker | undefined>(undefined);
+  const lastVideoTimeRef = useRef(-1);
+  const lastSentTimeRef = useRef(0);
+
+  const setupHandLandmarker = async () => {
+    const vision = await FilesetResolver.forVisionTasks(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22-rc.20250304/wasm'
+    );
+    try {
+      handLandmarkerRef.current = await HandLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath:
+            'https://storage.googleapis.com/mediapipe-tasks/hand_landmarker/hand_landmarker.task',
+          delegate: 'GPU',
+        },
+        runningMode: 'VIDEO',
+        numHands: 1,
+      });
+      console.log('✅ HandLandmarker setup with GPU');
+    } catch (gpuErr) {
+      console.warn('⚠ GPU failed, falling back to CPU', gpuErr);
+      handLandmarkerRef.current = await HandLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath:
+            'https://storage.googleapis.com/mediapipe-tasks/hand_landmarker/hand_landmarker.task',
+          delegate: 'CPU',
+        },
+        runningMode: 'VIDEO',
+        numHands: 1,
+      });
+      console.log('✅ HandLandmarker setup with CPU');
+    }
+    // Start the prediction loop
+    requestAnimationFrame(predictWebcam);
+  };
 
   useEffect(() => {
-    if (isActive) {
-      startCamera();
-      startGestureSimulation();
-    } else {
-      stopCamera();
-      stopGestureSimulation();
-    }
+    // Run setup only once
+    setupHandLandmarker();
 
-    return () => {
-      stopCamera();
-      stopGestureSimulation();
-    };
-  }, [isActive]);
+    // --- Socket Listeners ---
+    socket.on('connect', () => setIsConnected(true));
+    socket.on('disconnect', () => setIsConnected(false));
 
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480 }
-      });
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setHasPermission(true);
+    socket.on('prediction_result', (data: { text: string; confidence: number }) => {
+      // Update the UI
+      setPredictedText(data.text);
+      
+      // Use ref to check if text is new, avoiding stale state in listener
+      if (data.text !== lastSpokenRef.current) {
+        speech.text = data.text;
+        window.speechSynthesis.speak(speech);
+        
+        // Update ref for listener logic
+        lastSpokenRef.current = data.text;
       }
-    } catch (error) {
-      console.error('Camera access denied:', error);
-      setHasPermission(false);
+    });
+
+    // Cleanup listeners on component unmount
+    return () => {
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('prediction_result');
+    };
+  }, []); // <-- Empty array ensures this runs only once on mount
+
+  const predictWebcam = () => {
+    // Check if everything is ready
+    if (!webcamRef.current || !webcamRef.current.video || !handLandmarkerRef.current) {
+      requestAnimationFrame(predictWebcam);
+      return;
     }
-  };
 
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null;
+    const video = webcamRef.current.video;
+
+    // Wait for video to be ready and have dimensions to prevent ROI error
+    if (video.readyState < 2 || video.videoWidth === 0 || video.videoHeight === 0) {
+      requestAnimationFrame(predictWebcam);
+      return;
     }
-  };
 
-  const startGestureSimulation = () => {
-    setIsSimulating(true);
-
-    const interval = setInterval(() => {
-      const randomGesture = gestureLibrary[Math.floor(Math.random() * gestureLibrary.length)];
-      onGestureDetected(randomGesture);
-    }, 3000);
-
-    (window as any).gestureInterval = interval;
-  };
-
-  const stopGestureSimulation = () => {
-    setIsSimulating(false);
-    if ((window as any).gestureInterval) {
-      clearInterval((window as any).gestureInterval);
+    // Check if it's a new frame
+    if (video.currentTime === lastVideoTimeRef.current) {
+      requestAnimationFrame(predictWebcam);
+      return;
     }
+    lastVideoTimeRef.current = video.currentTime;
+
+    let results;
+    try {
+      // Detect hands using the ref
+      results = handLandmarkerRef.current.detectForVideo(video, Date.now());
+    } catch (err) {
+      console.error('HandLandmarker error:', err);
+      requestAnimationFrame(predictWebcam);
+      return;
+    }
+
+    // If hands are found
+    if (results.landmarks && results.landmarks.length > 0) {
+      const hand = results.landmarks[0];
+      // Convert to pixel coordinates (as you had before)
+      const pixelLandmarks = hand.map((lm: Landmark) => [
+        lm.x * WEBCAM_WIDTH,
+        lm.y * WEBCAM_HEIGHT,
+      ]);
+      
+      // Throttle sending data to backend
+      if (socket.connected && Date.now() - lastSentTimeRef.current > SEND_INTERVAL) {
+        socket.emit('gesture_data', { landmarks: pixelLandmarks });
+        lastSentTimeRef.current = Date.now();
+      }
+    }
+
+    // Continue the loop
+    requestAnimationFrame(predictWebcam);
   };
 
   return (
-    <div className="relative w-full max-w-2xl mx-auto">
-      <div className="relative bg-gray-900 rounded-2xl overflow-hidden shadow-2xl aspect-video">
-        {isActive && hasPermission === true ? (
-          <>
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover mirror"
-            />
-
-            {/* Gesture Detection Overlay */}
-            <div className="absolute inset-0 pointer-events-none">
-              {/* Corner Markers */}
-              <div className="absolute top-4 left-4 w-12 h-12 border-t-4 border-l-4 border-green-400"></div>
-              <div className="absolute top-4 right-4 w-12 h-12 border-t-4 border-r-4 border-green-400"></div>
-              <div className="absolute bottom-4 left-4 w-12 h-12 border-b-4 border-l-4 border-green-400"></div>
-              <div className="absolute bottom-4 right-4 w-12 h-12 border-b-4 border-r-4 border-green-400"></div>
-
-              {/* Detection Status */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
-                <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                Detecting Gestures
-              </div>
-
-              {/* Hand Landmark Simulation */}
-              {isSimulating && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative w-48 h-48">
-                    {[...Array(21)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute w-2 h-2 bg-blue-500 rounded-full animate-pulse"
-                        style={{
-                          left: `${Math.random() * 100}%`,
-                          top: `${Math.random() * 100}%`,
-                          animationDelay: `${i * 0.05}s`
-                        }}
-                      ></div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </>
-        ) : isActive && hasPermission === false ? (
-          <div className="flex flex-col items-center justify-center h-full text-white p-8 text-center">
-            <CameraOff className="w-16 h-16 mb-4 text-red-400" />
-            <h3 className="text-xl font-semibold mb-2">Camera Access Denied</h3>
-            <p className="text-gray-400">Please enable camera permissions to use gesture detection</p>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full text-white">
-            <Camera className="w-16 h-16 mb-4 text-gray-500" />
-            <p className="text-gray-400">Camera Inactive</p>
-          </div>
-        )}
+    <div className="flex flex-col items-center">
+      <div className="mb-4 text-center p-4 bg-gray-800 rounded-lg shadow-lg">
+        <p className="text-lg text-gray-300">
+          Status: {isConnected ? 'Connected 🟢' : 'Disconnected 🔴'}
+        </p>
+        <h2 className="text-3xl font-bold text-white">
+          Last Gesture: {predictedText}
+        </h2>
       </div>
 
-      {/* Privacy Notice */}
-      <div className="mt-4 text-center text-sm text-gray-600">
-        <Shield className="inline w-4 h-4 mr-1" />
-        All processing happens locally - no video data is stored
-      </div>
+      <ReactWebcam
+        ref={webcamRef}
+        width={WEBCAM_WIDTH}
+        height={WEBCAM_HEIGHT}
+        mirrored
+        videoConstraints={{ facingMode: 'user' }}
+        className="rounded-lg border-4 border-gray-700"
+      />
     </div>
   );
 }
 
-// Import Shield icon
-import { Shield } from 'lucide-react';
+export default GestureComponent;

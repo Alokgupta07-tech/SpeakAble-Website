@@ -14,7 +14,7 @@ export default function Features() {
     {
       icon: Zap,
       title: 'Zero Latency',
-      description: 'Conversations flow naturally without frustrating delays - under 500ms response time',
+      description: 'Conversations flow naturally without frustrating delays',
       color: 'from-yellow-500 to-orange-600'
     },
     {
@@ -26,7 +26,7 @@ export default function Features() {
     {
       icon: Globe,
       title: 'Universal Access',
-      description: 'Multi-language support breaking barriers worldwide with affordable technology',
+      description: 'language support breaking barriers worldwide with affordable technology',
       color: 'from-purple-500 to-pink-600'
     }
   ];
