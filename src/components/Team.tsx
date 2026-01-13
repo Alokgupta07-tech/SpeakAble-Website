@@ -3,7 +3,7 @@ import { Github, Linkedin } from 'lucide-react';
 export default function Team() {
   const teamMembers = [
     { name: 'Alok Kumar', role: 'Full Stack Developer', year: '1st Year CSE Core' },
-    { name: 'Adrija Datta', role: 'AI/ML Engineer', year: '1st Year CSE Core' },
+    { name: 'Adrija Datta', role: 'Frontend Developer', year: '1st Year CSE Core' },
     { name: 'Yogya Gupta', role: 'Frontend Developer', year: '1st Year CSE Core' },
     { name: 'Ayush Rai', role: 'Backend Developer', year: '1st Year CSE Core' },
     { name: 'Aryan Kumar Singh', role: 'AI Specialist', year: '1st Year CSE AI/ML' },
