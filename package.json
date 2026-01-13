@@ -1,8 +1,11 @@
 {
-  "name": "vite-react-typescript-starter",
-  "private": true,
-  "version": "0.0.0",
+  "name": "speakable",
+  "private": false,
+  "version": "1.0.0",
   "type": "module",
+  "description": "AI-powered gesture-to-speech communication platform",
+  "author": "Team Chill Coders",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
