@@ -5,42 +5,42 @@ export default function Features() {
     {
       icon: Hand,
       title: 'AI-Powered Recognition',
-      description: 'MediaPipe-based hand tracking with 95%+ accuracy for precise gesture detection',
+      description: 'Tracks 21 hand landmarks and applies geometric rules to recognize a limited set of static hand shapes.',
       color: 'from-indigo-500 to-purple-600',
       bgColor: 'bg-indigo-50'
     },
     {
       icon: Clock,
       title: 'Real-Time Processing',
-      description: 'Sub-100ms latency ensures natural, fluid conversations without interruption',
+      description: 'Frame-by-frame tracking, temporal smoothing and a short commit delay reduce flicker and repeated phrases.',
       color: 'from-pink-500 to-rose-600',
       bgColor: 'bg-pink-50'
     },
     {
       icon: Shield,
       title: 'Privacy First',
-      description: 'Zero cloud dependency—all processing happens locally on your device',
+      description: 'Camera frames are processed in the browser. The hand-tracking model is downloaded from a CDN when the demo loads.',
       color: 'from-green-500 to-emerald-600',
       bgColor: 'bg-green-50'
     },
     {
       icon: Brain,
       title: 'Smart Learning',
-      description: 'Adaptive AI learns your gesture patterns for personalized accuracy',
+      description: 'A phrase builder lets people correct, combine and speak recognized phrases before sharing them.',
       color: 'from-amber-500 to-orange-600',
       bgColor: 'bg-amber-50'
     },
     {
       icon: Globe,
       title: 'Multi-Language',
-      description: 'Support for multiple languages to break global communication barriers',
+      description: 'Speech output uses the browser speech engine; available voices and languages depend on the device.',
       color: 'from-cyan-500 to-blue-600',
       bgColor: 'bg-cyan-50'
     },
     {
       icon: Zap,
       title: 'Web-Based',
-      description: 'No installation needed—access from any device with a camera and browser',
+      description: 'Runs in a modern browser with camera permission and WebAssembly support.',
       color: 'from-violet-500 to-purple-600',
       bgColor: 'bg-violet-50'
     }
@@ -83,8 +83,8 @@ export default function Features() {
             <div className="space-y-6">
               {[
                 { step: '1', title: 'Capture Gesture', desc: 'Your camera detects hand movements in real-time', icon: '📹' },
-                { step: '2', title: 'AI Analysis', desc: 'MediaPipe AI processes gesture patterns instantly', icon: '🧠' },
-                { step: '3', title: 'Text Conversion', desc: 'Gestures are mapped to meaningful words', icon: '✍️' },
+                { step: '2', title: 'Landmark Analysis', desc: 'A lightweight geometric classifier evaluates finger positions and hand shape', icon: '🧠' },
+                { step: '3', title: 'Phrase Building', desc: 'Recognized shapes map to suggested phrases that can be edited', icon: '✍️' },
                 { step: '4', title: 'Voice Output', desc: 'Natural speech synthesis brings words to life', icon: '🔊' }
               ].map((item) => (
                 <div key={item.step} className="flex items-start gap-4 group">

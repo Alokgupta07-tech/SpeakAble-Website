@@ -12,7 +12,7 @@ export default function About() {
             Breaking Barriers,<br />Building Connections
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Every person deserves to be heard. We're making that possible through cutting-edge AI technology.
+            Every person deserves accessible ways to communicate. SpeakAble explores one small, practical interaction: turning selected hand shapes into editable phrases and speech.
           </p>
         </div>
 
@@ -26,7 +26,7 @@ export default function About() {
             <div className="mt-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">The Problem</h3>
               <p className="text-gray-600 leading-relaxed">
-                Over 70 million individuals worldwide struggle with speech impairments, facing isolation and limited access to communication tools that truly understand their needs.
+                People communicate in many different ways. Assistive tools should be designed around their users, support individual preferences and remain transparent about their limitations.
               </p>
             </div>
           </div>
@@ -40,7 +40,7 @@ export default function About() {
             <div className="mt-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Innovation</h3>
               <p className="text-gray-600 leading-relaxed">
-                Real-time AI gesture recognition transforms hand movements into natural speech instantly. No delays, no barriers—just seamless conversation.
+                A browser-based hand-tracking model detects landmarks. A lightweight classifier maps a limited set of static hand shapes to suggested phrases, which users can edit and speak.
               </p>
             </div>
           </div>
@@ -54,7 +54,7 @@ export default function About() {
             <div className="mt-6">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">The Vision</h3>
               <p className="text-gray-600 leading-relaxed">
-                Creating a world where communication barriers don't exist. Where everyone can express themselves freely and be understood, regardless of their abilities.
+                Building a prototype in the open, learning from accessibility feedback and working toward communication tools that are useful, respectful and inclusive.
               </p>
             </div>
           </div>

@@ -50,7 +50,7 @@ export default function Hero({ onGetStarted }: HeroProps) {
         </p>
 
         <p className="text-lg md:text-xl text-white/80 mb-10 max-w-3xl mx-auto leading-relaxed">
-          Empowering 70M+ speech-impaired individuals worldwide with real-time AI-powered gesture recognition and natural voice synthesis
+          An accessible communication prototype that maps selected hand shapes to editable text and spoken phrases, directly in your browser
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -74,16 +74,16 @@ export default function Hero({ onGetStarted }: HeroProps) {
         {/* Stats Bar */}
         <div className="mt-16 grid grid-cols-3 gap-8 max-w-3xl mx-auto">
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-            <div className="text-3xl font-bold text-white mb-1">70M+</div>
-            <div className="text-white/80 text-sm">People Worldwide</div>
+            <div className="text-3xl font-bold text-white mb-1">On-device</div>
+            <div className="text-white/80 text-sm">Hand tracking</div>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-            <div className="text-3xl font-bold text-white mb-1">&lt;100ms</div>
-            <div className="text-white/80 text-sm">Response Time</div>
+            <div className="text-3xl font-bold text-white mb-1">Editable</div>
+            <div className="text-white/80 text-sm">Phrase output</div>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
-            <div className="text-3xl font-bold text-white mb-1">100%</div>
-            <div className="text-white/80 text-sm">Privacy Protected</div>
+            <div className="text-3xl font-bold text-white mb-1">Local</div>
+            <div className="text-white/80 text-sm">Gesture inference</div>
           </div>
         </div>
       </div>
