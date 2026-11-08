@@ -22,7 +22,7 @@ export default function Footer() {
               <span className="text-white">Able</span>
             </h3>
             <p className="text-gray-400 leading-relaxed mb-6 max-w-md">
-              Empowering 70+ million speech-impaired individuals worldwide with AI-powered gesture recognition technology. Breaking barriers, one gesture at a time.
+              An accessibility-focused prototype that maps a limited set of hand shapes to editable text and speech.
             </p>
             <div className="flex gap-4">
               <a
@@ -107,7 +107,7 @@ export default function Footer() {
         <div className="border-t border-white/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-400 text-sm">
-              © 2025 SpeakAble. Empowering communication through AI.
+              © 2026 SpeakAble. An assistive technology prototype.
             </p>
             <p className="text-gray-400 text-sm flex items-center gap-2">
               Made with <Heart className="w-4 h-4 text-pink-500 fill-current" /> by Team Chill Coders
